@@ -8,7 +8,8 @@ import numpy as np
 
 
 def absSobelThresh(img, orient='x', sobel_kernel=3, thresh=(0,255) ):
-	gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+	if img.shape[2] > 1:
+		gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
 	if orient == 'x':
 		sobelx = cv2.Sobel(gray, cv2.CV_64F, 0, 1)
@@ -32,7 +33,8 @@ def absSobelThresh(img, orient='x', sobel_kernel=3, thresh=(0,255) ):
 
 
 def dirThresh(img, sobel_kernel=3, thresh=(0,255) ):
-	gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+	if img.shape[2] > 1:
+		gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 	
 	sobelx = cv2.Sobel(gray, cv2.CV_64F, 0, 1)
 	sobely = cv2.Sobel(gray, cv2.CV_64F, 1, 0)
@@ -46,14 +48,16 @@ def dirThresh(img, sobel_kernel=3, thresh=(0,255) ):
 
 
 def magThresh(img, sobel_kernel=3, thresh=(0,255) ):
-	gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+	if img.shape[2] > 1:
+		gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+	
 	sobelx = cv2.Sobel(gray, cv2.CV_64F, 0, 1)
 	sobely = cv2.Sobel(gray, cv2.CV_64F, 1, 0)
 
 	gradMag = np.sqrt(sobelx**2 + sobely**2)
 	scale_factor = np.max(gradMag) / 255
 	gradMag = (gradMag/scale_factor).astype(np.uint8)
-	print(gradMag)
+
 	binary_output = np.zeros_like(gradMag)
 	binary_output[(gradMag >= thresh[0]) & (gradMag <= thresh[1])] = 1
 	
@@ -65,7 +69,7 @@ if __name__=='__main__':
 
 	ksize = 3
 
-	image = cv2.imread('./test_images/test6.jpg')
+	image = cv2.imread('./test_images/straight_lines1.jpg')
 
 	gradx = absSobelThresh(image, orient='x', sobel_kernel=ksize, thresh=(0,20))
 	grady = absSobelThresh(image, orient='y', sobel_kernel=ksize, thresh=(0,20))
@@ -74,10 +78,15 @@ if __name__=='__main__':
 	dir_binary = dirThresh(image, sobel_kernel=ksize, thresh=(0,np.pi/2.) )
 
 	composite = np.zeros_like(dir_binary)
-	composite[((gradx==1)&(grady==1)) | ((mag_binary==1)&(dir_binary==1)) ] = 1
+	composite[((gradx==0)|(grady==0)) & ((mag_binary==0)|(dir_binary==0)) ] = 1
 
 	plt.imshow(composite, cmap='gray')
 	plt.show()
+
+	mpimg.imsave('./gradients_binary.png', composite, cmap=mpimg.cm.gray)
+
+
+
 
 
 

@@ -39,14 +39,16 @@ if __name__=='__main__':
 
 	image_bgr = cv2.imread('./signs_vehicles_xygrad.png')
 	
-	H_binary = HLS_Channel(image_bgr, 's', thresh=(5,30))
-	
+	h_binary = HLS_Channel(image_bgr, 'h', thresh=(5,30))
+	l_binary = HLS_Channel(image_bgr, 'l', thresh=(5,30))
+	s_binary = HLS_Channel(image_bgr, 's', thresh=(5,30))
 
-	plt.imshow(H_binary, cmap='gray')
+	plt.imshow(s_binary, cmap='gray')
 	plt.show()
 
-
-
+	mpimg.imsave('./h_binary.png', h_binary, cmap='gray')
+	mpimg.imsave('./l_binary.png', l_binary, cmap='gray')
+	mpimg.imsave('./s_binary.png', s_binary, cmap='gray')
 
 
 

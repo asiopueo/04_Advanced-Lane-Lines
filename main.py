@@ -21,13 +21,13 @@ def pipeline(img):
 	binaryDir = dirThresh(img, sobel_kernel=ksize, thresh=(-np.pi/4.,np.pi/4.) )
 
 	binaryGrad = np.zeros_like(img)
-	binaryGrad[((binaryGradx==1)&(binaryGrady==1)) | ((binaryMag==1)&(binaryDir==1)) ] = 1
+	binaryGrad[((binaryGradx==0)|(binaryGrady==0)) & ((binaryMag==0)|(binaryDir==0)) ] = 1
 	
 
 	##	Color Channels
-	hChannel = HLS_Channel(img, 'h', (5,20))
-	lChannel = HLS_Channel(img, 'l', (5,100))
-	sChannel = HLS_Channel(img, 's', (0,100))
+	h_binary = HLS_Channel(img, 'h', (5,20))
+	l_binary = HLS_Channel(img, 'l', (5,100))
+	s_binary = HLS_Channel(img, 's', (0,100))
 
 	binaryColor = np.zeros_like(img)
 	#binaryColor[()|()|()] = 1
@@ -36,20 +36,18 @@ def pipeline(img):
 	binaryComposite[(binaryGrad==1)|(binaryColor==1)] = 1
 
 	##  Final binary image
-	binaryComposite = np.copy(sChannel)
+	#binaryComposite = np.copy(sChannel)
 
 	##	Import operations which warp the picture into bird's eye perspective here
 	
 	binaryWarped = imageWarper(binaryComposite)
 
-
 	fittedWarped = laneFit(binaryWarped)
 
 	fittedWindshield = imageWarperInv(fittedWarped)
 
-	augmentedPicture = np.copy(fittedWindshield)
-	return augmentedPicture
-
+	return weighted_img(img, fittedWindshield)
+	#return fittedWindshield
 
 
 def weighted_img(img, initial_img, α=0.8, β=1., λ=0.):
@@ -66,7 +64,7 @@ def screenWriter(img):
 
 if __name__=='__main__':
 
-	imageRGB = mpimg.imread('./test_images/straight_lines1.jpg')
+	imageRGB = mpimg.imread('./test_images/straight_lines2.jpg')
 	outputImage = pipeline(imageRGB)
  	
 	plt.subplot(2,1,1)

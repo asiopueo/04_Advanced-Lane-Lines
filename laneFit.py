@@ -7,7 +7,8 @@ import numpy as np
 
 
 def laneFit(img):
-    #img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    if len(img.shape) >= 3 and img.shape[2] > 1:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     histogram = np.sum(img[img.shape[0]//2:,:], axis=0)
     out_img = np.dstack((img, img, img))*255
@@ -81,6 +82,7 @@ def laneFit(img):
 
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
+
     #plt.imshow(out_img)
     #plt.plot(left_fitx, ploty, color='yellow')
     #plt.plot(right_fitx, ploty, color='yellow')
@@ -91,8 +93,11 @@ def laneFit(img):
 
 
 
+
+
+
+
 if __name__=='__main__':
-    ## TODO: obvious
     image_bgr = cv2.imread('./warped.png')
 
     fittedImage = laneFit(image_bgr)
@@ -100,6 +105,7 @@ if __name__=='__main__':
     plt.imshow(fittedImage)
     plt.show()
 
+    mpimg.imsave('./warped_fitted.png', fittedImage)
 
 
 

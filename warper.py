@@ -5,9 +5,8 @@ import PIL.Image
 import matplotlib.image as mpimg
 
 
-src = np.float32([[675,445], [1060,690], [250,690], [605,445]])
-#dst = np.float32([[1000,445], [1000,690], [300,690], [300,445]])
-dst = np.float32([[1060,0], [1060,690], [250,690], [250,0]])
+src = np.float32([[675,445], [1020,665], [280,665], [605,445]])
+dst = np.float32([[1020,0], [1020,665], [280,665], [280,0]])
 
 
 
@@ -26,9 +25,8 @@ def imageWarperInv(img):
 
 if __name__=='__main__':
 	
-	image_rgb = mpimg.imread('./test_images/straight_lines1.jpg')
-	#image_rgb = mpimg.imread('./test_images/straight_lines2.jpg')
-	
+	image_rgb = mpimg.imread('./gradients_binary.png')
+		
 	image_warped = imageWarper(image_rgb)
 
 	plt.subplot(2,1,1)
@@ -39,7 +37,7 @@ if __name__=='__main__':
 	plt.imshow(image_warped)
 	plt.show()
 
-	#mpimg.imsave('./warped.png', warped)
+	mpimg.imsave('./warped.png', image_warped, cmap='gray')
 
 
 

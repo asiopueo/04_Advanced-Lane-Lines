@@ -21,6 +21,7 @@ if ret==True:
 	plt.imshow(img)
 
 
+
 objpoints = []
 imgpoints = []
 
