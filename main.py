@@ -1,3 +1,6 @@
+import sys
+import getopt
+
 import PIL
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
@@ -8,6 +11,17 @@ from gradients import *
 from hls import *
 from warper import *
 from laneFit import *
+
+from moviepy.editor import VideoFileClip
+
+
+class processingStack(object):
+	def _init__(self):
+		pass
+
+	def printStuff(self):
+		print('bla...')
+
 
 
 def pipeline(img):
@@ -22,8 +36,6 @@ def pipeline(img):
 
 	binaryGrad = np.zeros_like(img)
 	binaryGrad[((binaryGradx==0)|(binaryGrady==0)) & ((binaryMag==0)|(binaryDir==0)) ] = 1
-	
-
 	##	Color Channels
 	h_binary = HLS_Channel(img, 'h', (5,20))
 	l_binary = HLS_Channel(img, 'l', (5,100))
@@ -37,22 +49,21 @@ def pipeline(img):
 
 	##  Final binary image
 	#binaryComposite = np.copy(sChannel)
-
 	##	Import operations which warp the picture into bird's eye perspective here
-	
 	binaryWarped = imageWarper(binaryComposite)
-
 	fittedWarped = laneFit(binaryWarped)
-
 	fittedWindshield = imageWarperInv(fittedWarped)
 
+	#if _tweak == 1:
+	#	return weighted_img(img, fittedWindshield)
+	#else:
+	#	return weighted_img(img, fittedWindshield)
+	
 	return weighted_img(img, fittedWindshield)
-	#return fittedWindshield
 
 
-def weighted_img(img, initial_img, α=0.8, β=1., λ=0.):
+def weighted_img(img, initial_img, α=0.2, β=1., λ=0.):
     return cv2.addWeighted(initial_img, α, img, β, λ)
-
 
 
 def screenWriter(img):
@@ -62,56 +73,83 @@ def screenWriter(img):
 
 
 
-if __name__=='__main__':
 
-	imageRGB = mpimg.imread('./test_images/straight_lines2.jpg')
+
+
+def imageProcessing():
+	pS = processingStack()
+	pS.printStuff()
+
+	imageRGB = mpimg.imread('./test_images/straight_lines1.jpg')
 	outputImage = pipeline(imageRGB)
- 	
-	plt.subplot(2,1,1)
+
+	height, width = (2, 1)
+
+	plt.subplot(height, width, 1)
 	plt.imshow(imageRGB)
 	plt.title('Input of the Pipeline')
-	plt.subplot(2,1,2)
+
+	plt.subplot(height, width, height*width)
 	plt.imshow(outputImage, cmap='gray')
 	plt.title('Output of the Pipeline')
-	plt.show()
+	plt.tight_layout()
+	plt.show()	
+
+
+def videoProcessing():
+	#clip = VideoFileClip('./videos/project_video.mp4')
+	clip = VideoFileClip('./videos/harder_challenge_video.mp4')
+
+	output_handel = './harder_challenge_output.mp4'
+
+	output_stream = clip.fl_image(pipeline)
+	output_stream.write_videofile(output_handel, audio=False)
+	print("nothing...")
+
+
+def usage():
+	print("How to use this program:")
+	print("Huh?")
 
 
 
 
+import getopt
 
-## Video processing block
-"""
-clip = VideoFileClip('./solidWhiteRight.mp4')
-#clip = VideoFileClip('./solidYellowLeft.mp4')
+def main(argv):
+	try:
+		opts, args = getopt.getopt(argv, 'vih', ['Image=', 'Video=', 'help'])
+	except getopt.GetoptError as err:
+		print(err)
+		usage()
+		sys.exit(2)
 
-output_handel = 'test_video.mp4'
+	for opt, arg in opts:
+		if opt in ('-i', '--Image'):
+			print('Option: ' + '\'' + arg + '\'')
+			imageProcessing()
+			
+		elif opt in ('-v', '--Video'):
+			videoProcessing()
+			
+		elif opt in ('-h', '--help'):
+			usage()
+			sys.exit()
+			
+		elif opt == '-c':
+			global _tweak
+			_tweak = 1
 
-output_stream = clip.fl_image(pipeline)
-output_stream.write_videofile(output_handel, audio=False)
-"""
-
-
-
-##	Ultimately not necessary, as warper takes care of it:
-"""
-def regionOfInterest(img, vertices):
-    #defining a blank mask to start with
-    mask = np.zeros_like(img)   
-    
-    #defining a 3 channel or 1 channel color to fill the mask with depending on the input image
-    if len(img.shape) > 2:
-        channel_count = img.shape[2]
-        ignore_mask_color = (255,) * channel_count
-    else:
-        ignore_mask_color = 255
-        
-    cv2.fillPoly(mask, [vertices], ignore_mask_color)
-    
-    maskedImage = cv2.bitwise_and(img, mask)
-    return maskedImage
-"""
+		else:
+			usage()
+			sys.exit()
 
 
+
+if __name__=='__main__':
+
+	main(sys.argv[1:])
+	sys.exit()
 
 
 
