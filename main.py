@@ -15,12 +15,6 @@ from laneFit import *
 from moviepy.editor import VideoFileClip
 
 
-class processingStack(object):
-	def _init__(self):
-		pass
-
-	def printStuff(self):
-		print('bla...')
 
 
 
@@ -36,16 +30,17 @@ def pipeline(img):
 
 	binaryGrad = np.zeros_like(img)
 	binaryGrad[((binaryGradx==0)|(binaryGrady==0)) & ((binaryMag==0)|(binaryDir==0)) ] = 1
+	
 	##	Color Channels
-	h_binary = HLS_Channel(img, 'h', (5,20))
-	l_binary = HLS_Channel(img, 'l', (5,100))
-	s_binary = HLS_Channel(img, 's', (0,100))
+	pipeline.h_binary = HLS_Channel(img, 'h', (5,20))
+	pipeline.l_binary = HLS_Channel(img, 'l', (5,100))
+	pipeline.s_binary = HLS_Channel(img, 's', (0,100))
 
-	binaryColor = np.zeros_like(img)
+	pipeline.binaryColor = np.zeros_like(img)
 	#binaryColor[()|()|()] = 1
 
 	binaryComposite = np.zeros_like(img)
-	binaryComposite[(binaryGrad==1)|(binaryColor==1)] = 1
+	pipeline.binaryComposite[(binaryGrad==1)|(pipeline.binaryColor==1)] = 1
 
 	##  Final binary image
 	#binaryComposite = np.copy(sChannel)
@@ -90,7 +85,8 @@ def imageProcessing():
 	plt.title('Input of the Pipeline')
 
 	plt.subplot(height, width, height*width)
-	plt.imshow(outputImage, cmap='gray')
+	plt.imshow(pipeline.s_binary, cmap='gray')
+	#plt.imshow(outputImage, cmap='gray')
 	plt.title('Output of the Pipeline')
 	plt.tight_layout()
 	plt.show()	
@@ -104,7 +100,7 @@ def videoProcessing():
 
 	output_stream = clip.fl_image(pipeline)
 	output_stream.write_videofile(output_handel, audio=False)
-	print("nothing...")
+
 
 
 def usage():
@@ -114,7 +110,6 @@ def usage():
 
 
 
-import getopt
 
 def main(argv):
 	try:
