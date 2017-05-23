@@ -80,9 +80,15 @@ I did this in lines # through # in my code in `my_other_file.py`
 
 ####6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+This is implemented lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+Just by calling the member `pipeline.lane`, I can display the image in the output.
+
 
 <img src="./examples/example_output.jpg" width="300">
+
+The function `screenWriter()` enables one to display text onto the image.
+
+
 
 ---
 
@@ -99,4 +105,19 @@ Here's a [link to my video result](./project_video.mp4)
 ####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+
+One of my achievements apart from lane detection itself, is establishing a pipeline structure which enables me to experiment more easily with the parameter values.  This is done by using the functions are objects paradigm of Python, and an own subroutine for working with 
+
+
+
+
+
+
+
+
+
+
+
+
+
 
