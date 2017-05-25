@@ -73,9 +73,12 @@ I verified that my perspective transform was working as expected by drawing the 
 
 ####4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+fit my lane lines with a 2nd order polynomial kinda like this:
 
-<img src="./examples/color_fit_lines.jpg" width="300">
+<img src="./curvature_test2.png" width="600">
+
+
+
 
 ####5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
@@ -86,8 +89,9 @@ I did this in lines # through # in my code in `my_other_file.py`
 This is implemented lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
 Just by calling the member `pipeline.lane`, I can display the image in the output.
 
+`test3.jpg`:
 
-<img src="./examples/example_output.jpg" width="300">
+<img src="./laneArea_test3.png" width="600">
 
 The function `screenWriter()` enables one to display text onto the image.
 
@@ -99,7 +103,7 @@ The function `screenWriter()` enables one to display text onto the image.
 
 ####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](./project_.mp4)
 
 ---
 
