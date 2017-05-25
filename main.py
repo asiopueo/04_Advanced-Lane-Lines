@@ -105,7 +105,7 @@ def videoProcessing():
 
 def usage():
 	print("How to use this program:")
-	print("Huh?")
+	pass
 
 
 
