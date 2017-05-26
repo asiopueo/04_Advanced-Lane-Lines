@@ -51,7 +51,7 @@ def pipeline(img):
 	pipeline.weightedImg = weighted_img(img, pipeline.fittedWindshield)
 	pipeline.weightedImg = screenWriter(pipeline.weightedImg, left_curveRad, right_curveRad)
 
-	print(left_curveRad, 'm', right_curveRad, 'm')
+	#print(left_curveRad, 'm', right_curveRad, 'm')
 	
 	return pipeline.weightedImg
 
@@ -98,10 +98,10 @@ def imageProcessing():
 
 
 def videoProcessing():
-	#clip = VideoFileClip('./videos/project_video.mp4')
-	clip = VideoFileClip('./videos/harder_challenge_video.mp4')
+	clip = VideoFileClip('./test_videos/project_video.mp4')
+	#clip = VideoFileClip('./videos/challenge_video.mp4')
 
-	output_handel = './harder_challenge_output.mp4'
+	output_handel = './output/output_video.mp4'
 
 	output_stream = clip.fl_image(pipeline)
 	output_stream.write_videofile(output_handel, audio=False)
