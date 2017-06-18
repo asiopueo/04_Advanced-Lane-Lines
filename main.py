@@ -13,8 +13,7 @@ from warper import *
 from laneFit import *
 
 from moviepy.editor import VideoFileClip
-
-
+from saver import image_saver, video_saver
 
 
 
@@ -92,7 +91,7 @@ def imageProcessing():
 	plt.tight_layout()
 	plt.show()	
 
-	fig.savefig('./output/curvature_test2.png')
+	image_saver(outputImage)
 
 
 
@@ -104,7 +103,8 @@ def videoProcessing():
 	output_handel = './output/output_video.mp4'
 
 	output_stream = clip.fl_image(pipeline)
-	output_stream.write_videofile(output_handel, audio=False)
+	video_saver(output_stream)
+
 
 
 
