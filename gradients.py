@@ -7,7 +7,7 @@ import numpy as np
 
 
 
-def absSobelThresh(img, orient='x', sobel_kernel=3, thresh=(0,255) ):
+def absSobelThresh(img, sobel_kernel=3, thresh=(0,255), orient='x'):
 	if img.shape[2] > 1:
 		gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
@@ -31,20 +31,22 @@ def absSobelThresh(img, orient='x', sobel_kernel=3, thresh=(0,255) ):
 	return binary_output
 
 
-
-def dirThresh(img, sobel_kernel=3, thresh=(0,255) ):
+def dirThresh(img, sobel_kernel=3, thresh=(0, np.pi/2) ):
 	if img.shape[2] > 1:
 		gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 	
-	sobelx = cv2.Sobel(gray, cv2.CV_64F, 0, 1)
-	sobely = cv2.Sobel(gray, cv2.CV_64F, 1, 0)
+	sobelx = cv2.Sobel(gray, cv2.CV_64F, 0, 1, sobel_kernel)
+	sobely = cv2.Sobel(gray, cv2.CV_64F, 1, 0, sobel_kernel)
 	
 	absgraddir = np.arctan2(np.absolute(sobely), np.absolute(sobelx))
+	#  Rescaling is absolutely essential!
+	scale_factor = np.max(absgraddir) / 255			
+	absgraddir = (absgraddir/scale_factor).astype(np.uint8)
+	
 	binary_output = np.zeros_like(absgraddir)
-	binary_output[(absgraddir >= thresh[0]) & (absgraddir < thresh[1])] = 1
+	binary_output[(absgraddir >= thresh[0]) & (absgraddir <= thresh[1])] = 1
 
 	return binary_output
-
 
 
 def magThresh(img, sobel_kernel=3, thresh=(0,255) ):
@@ -83,7 +85,7 @@ if __name__=='__main__':
 	plt.imshow(composite, cmap='gray')
 	plt.show()
 
-	mpimg.imsave('./gradients_binary.png', composite, cmap=mpimg.cm.gray)
+	mpimg.imsave('./output_images/gradients_binary.png', composite, cmap=mpimg.cm.gray)
 
 
 

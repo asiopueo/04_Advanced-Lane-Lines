@@ -47,7 +47,7 @@ if __name__=='__main__':
 	plt.tight_layout()
 	plt.show()
 
-	fig.savefig('./output/warped.png')
+	fig.savefig('./output_images/warped.png')
 
 
 

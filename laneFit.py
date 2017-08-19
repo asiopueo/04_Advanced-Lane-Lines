@@ -103,7 +103,6 @@ def laneFit(img):
     # Draw the lane onto the warped blank image
     cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
 
-
     # Calculate the curvature of the lanes:
     y_eval = np.max(ploty)
     ym_per_pix = 30/720 # meters per pixel in y dimension
@@ -123,18 +122,15 @@ def laneFit(img):
 
 
 
-
-
-
 if __name__=='__main__':
-    image_bgr = cv2.imread('./warped.png')
+    image_bgr = cv2.imread('./output_images/warped.png')
 
     fittedImage = laneFit(image_bgr)
 
     plt.imshow(fittedImage)
     plt.show()
 
-    mpimg.imsave('./warped_fitted.png', fittedImage)
+    #mpimg.imsave('./output_images/warped_fitted.png', fittedImage)
 
 
 
@@ -144,7 +140,7 @@ if __name__=='__main__':
     # Create an image to draw the lines on
     warp_zero = np.zeros_like(warped).astype(np.uint8)
     color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
-
+ls
     # Recast the x and y points into usable format for cv2.fillPoly()
     pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
     pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])

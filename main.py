@@ -7,13 +7,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
+from moviepy.editor import VideoFileClip
+from saver import image_saver, video_saver
+
+
 from gradients import *
 from hls import *
 from warper import *
 from laneFit import *
-
-from moviepy.editor import VideoFileClip
-from saver import image_saver, video_saver
 
 
 
@@ -21,22 +22,22 @@ def pipeline(img):
 	##	Calulation of Gradients
 	ksize = 3
 
-	binaryGradx = absSobelThresh(img, orient='x', sobel_kernel=ksize, thresh=(0,20))
-	binaryGrady = absSobelThresh(img, orient='y', sobel_kernel=ksize, thresh=(0,20))
+	#binaryGradx = absSobelThresh(img, orient='x', sobel_kernel=ksize, thresh=(0,20))
+	#binaryGrady = absSobelThresh(img, orient='y', sobel_kernel=ksize, thresh=(0,20))
 
-	binaryMag = magThresh(img, sobel_kernel=ksize, thresh=(10,50) )
-	binaryDir = dirThresh(img, sobel_kernel=ksize, thresh=(-np.pi/4.,np.pi/4.) )
+	binaryMag = magThresh(img, sobel_kernel=ksize, thresh=(60,255) )
+	#binaryDir = dirThresh(img, sobel_kernel=ksize, thresh=(-np.pi/4.,np.pi/4.) )
 
 	pipeline.binaryGrad = np.zeros_like(img)
-	pipeline.binaryGrad[((binaryGradx==0)|(binaryGrady==0)) & ((binaryMag==0)|(binaryDir==0)) ] = 1
-	
+	#pipeline.binaryGrad[((binaryGradx==0)|(binaryGrady==0)) & ((binaryMag==0)|(binaryDir==0)) ] = 1
+	pipeline.binaryGrad[binaryMag==1] = 1
+
 	##	Color Channels
-	pipeline.h_binary = HLS_Channel(img, 'h', (5,20))
-	pipeline.l_binary = HLS_Channel(img, 'l', (5,100))
-	pipeline.s_binary = HLS_Channel(img, 's', (0,100))
+	#pipeline.h_binary = HLS_Channel(img, 'h', (5,20))
+	#pipeline.l_binary = HLS_Channel(img, 'l', (5,100))
+	#pipeline.s_binary = HLS_Channel(img, 's', (0,100))
 
 	pipeline.binaryColor = np.zeros_like(img)
-	#binaryColor[()|()|()] = 1
 
 	pipeline.binaryComposite = np.zeros_like(img)
 	pipeline.binaryComposite[(pipeline.binaryGrad==1)|(pipeline.binaryColor==1)] = 1
@@ -68,10 +69,6 @@ def screenWriter(img, left_cur, right_cur):
 	return textedImg
 
 
-
-
-
-
 def imageProcessing():
 
 	imageRGB = mpimg.imread('./test_images/test2.jpg')
@@ -100,7 +97,7 @@ def videoProcessing():
 	clip = VideoFileClip('./test_videos/project_video.mp4')
 	#clip = VideoFileClip('./videos/challenge_video.mp4')
 
-	output_handel = './output/output_video.mp4'
+	#output_handel = './output/output_video.mp4'
 
 	output_stream = clip.fl_image(pipeline)
 	video_saver(output_stream)
@@ -111,7 +108,6 @@ def videoProcessing():
 def usage():
 	print("How to use this program:")
 	pass
-
 
 
 
@@ -143,6 +139,7 @@ def main(argv):
 		else:
 			usage()
 			sys.exit()
+
 
 
 

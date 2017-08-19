@@ -10,7 +10,7 @@ import cv2
 
 
 
-def HLS_Channel(img_bgr, channel='l', thresh=(0,255)):
+def HLS_Channel(img_bgr, thresh=(0,255), channel='l'):
 
 	img_hls = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HLS)
 	
@@ -37,7 +37,7 @@ def HLS_Channel(img_bgr, channel='l', thresh=(0,255)):
 
 if __name__=='__main__':
 
-	image_bgr = cv2.imread('./signs_vehicles_xygrad.png')
+	image_bgr = cv2.imread('./test_images/signs_vehicles_xygrad.png')
 	
 	h_binary = HLS_Channel(image_bgr, 'h', thresh=(5,30))
 	l_binary = HLS_Channel(image_bgr, 'l', thresh=(5,30))
@@ -46,9 +46,9 @@ if __name__=='__main__':
 	plt.imshow(s_binary, cmap='gray')
 	plt.show()
 
-	mpimg.imsave('./h_binary.png', h_binary, cmap='gray')
-	mpimg.imsave('./l_binary.png', l_binary, cmap='gray')
-	mpimg.imsave('./s_binary.png', s_binary, cmap='gray')
+	mpimg.imsave('./output_images/h_binary.png', h_binary, cmap='gray')
+	mpimg.imsave('./output_images/l_binary.png', l_binary, cmap='gray')
+	mpimg.imsave('./output_images/s_binary.png', s_binary, cmap='gray')
 
 
 
