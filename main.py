@@ -8,6 +8,7 @@ import numpy as np
 import cv2
 
 from moviepy.editor import VideoFileClip
+from collections import deque
 from saver import image_saver, video_saver
 
 
@@ -22,42 +23,49 @@ def pipeline(img):
 	##	Calulation of Gradients
 	ksize = 3
 
+	if pipeline.flag == 0:
+		pipeline.buffer = deque(12*[],12)
+		pipeline.flag = 1
+	
+
 	#binaryGradx = absSobelThresh(img, orient='x', sobel_kernel=ksize, thresh=(0,20))
 	#binaryGrady = absSobelThresh(img, orient='y', sobel_kernel=ksize, thresh=(0,20))
-
-	binaryMag = magThresh(img, sobel_kernel=ksize, thresh=(60,255) )
+	binaryMag = magThresh(img, sobel_kernel=ksize, thresh=(65,210) )
 	#binaryDir = dirThresh(img, sobel_kernel=ksize, thresh=(-np.pi/4.,np.pi/4.) )
-
-	pipeline.binaryGrad = np.zeros_like(img)
+	binaryGrad = np.zeros_like(img)
 	#pipeline.binaryGrad[((binaryGradx==0)|(binaryGrady==0)) & ((binaryMag==0)|(binaryDir==0)) ] = 1
-	pipeline.binaryGrad[binaryMag==1] = 1
+	binaryGrad[binaryMag==1] = 1
 
 	##	Color Channels
-	#pipeline.h_binary = HLS_Channel(img, 'h', (5,20))
-	#pipeline.l_binary = HLS_Channel(img, 'l', (5,100))
-	#pipeline.s_binary = HLS_Channel(img, 's', (0,100))
-
-	pipeline.binaryColor = np.zeros_like(img)
-
-	pipeline.binaryComposite = np.zeros_like(img)
-	pipeline.binaryComposite[(pipeline.binaryGrad==1)|(pipeline.binaryColor==1)] = 1
-
+	h_binary = HLS_Channel(img, (20,51), 'h')
+	#l_binary = HLS_Channel(img, 'l', (5,100))
+	#s_binary = HLS_Channel(img, 's', (0,100))
+	binaryColor = np.zeros_like(img)
+	binaryColor[h_binary==1] = 1
+	
+	binaryComposite = np.zeros_like(img)
+	binaryComposite[(binaryGrad==1)|(binaryColor==1)] = 1
+	
+	pipeline.buffer.appendleft(binaryComposite)
+	binaryComposite = sum(pipeline.buffer)
 	##  Final binary image
 	#	binaryComposite = np.copy(sChannel)
 	##	Import operations which warp the picture into bird's eye perspective here
-	pipeline.binaryWarped = imageWarper(pipeline.binaryComposite)
-	pipeline.fittedWarped, left_curveRad, right_curveRad = laneFit(pipeline.binaryWarped)
-	pipeline.fittedWindshield = imageWarperInv(pipeline.fittedWarped)
-	pipeline.weightedImg = weighted_img(img, pipeline.fittedWindshield)
-	pipeline.weightedImg = screenWriter(pipeline.weightedImg, left_curveRad, right_curveRad)
-
+	binaryWarped = imageWarper(binaryComposite)
+	fittedWarped, left_curveRad, right_curveRad = laneFit(binaryWarped)
+	fittedWindshield = imageWarperInv(fittedWarped)
+	weightedImg = weighted_img(img, fittedWindshield)
+	weightedImg = screenWriter(weightedImg, left_curveRad, right_curveRad)
 	#print(left_curveRad, 'm', right_curveRad, 'm')
-	
-	return pipeline.weightedImg
+	return weightedImg
+
+
 
 
 def weighted_img(img, initial_img, α=0.2, β=1., λ=0.):
     return cv2.addWeighted(initial_img, α, img, β, λ)
+
+
 
 
 def screenWriter(img, left_cur, right_cur):
@@ -87,14 +95,13 @@ def imageProcessing():
 	plt.title('Output of the Pipeline')
 	plt.tight_layout()
 	plt.show()	
-
 	image_saver(outputImage)
 
 
 
 
 def videoProcessing():
-	clip = VideoFileClip('./test_videos/project_video.mp4')
+	clip = VideoFileClip('./test_videos/project_video.mp4').subclip(17,25)
 	#clip = VideoFileClip('./videos/challenge_video.mp4')
 
 	#output_handel = './output/output_video.mp4'
@@ -141,7 +148,7 @@ def main(argv):
 			sys.exit()
 
 
-
+pipeline.flag = 0
 
 if __name__=='__main__':
 
