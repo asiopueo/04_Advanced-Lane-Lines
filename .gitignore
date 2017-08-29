@@ -1,0 +1,8 @@
+*.pyc
+
+output_images/
+output_videos/
+
+*.sublime-project
+*.sublime-workspace
+
