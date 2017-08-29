@@ -23,11 +23,6 @@ def pipeline(img):
     ksize = 3
 
     gray = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
-
-
-    #if pipeline.flag == 0:
-    #   pipeline.buffer = deque(12*[],12)
-    #   pipeline.flag = 1
     
     pipeline.leftLane = Line()
     pipeline.rightLane = Line()

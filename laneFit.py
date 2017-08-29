@@ -4,6 +4,8 @@ import matplotlib.image as mpimg
 import cv2
 import numpy as np
 
+from collections import deque
+
 BUFFER_LENGTH = 12
 EPSILON = 10.
 NWINDOWS = 9        # Number of sliding windows
@@ -16,7 +18,8 @@ class Line():
         self.detected = False       # was the line detected in the last iteration?
         self.recent_xfitted = []    # x values of the last n fits of the line
         self.bestx = None           # average x values of the fitted line over the last n iterations
-        self.best_fit = None        # polynomial coefficients averaged over the last n iterations
+        self.fit_buffer = deque(BUFFER_LENGTH*[], BUFFER_LENGTH)
+        self.avg_fit = np.array([0,0,0], dtype='float') # polynomial coefficients averaged over the last n iterations
         self.current_fit = [np.array([False])]          # polynomial coefficients for the most recent fit
         self.radius_of_curvature = None                 # radius of curvature of the line in some units
         self.line_base_pos = None                       # distance in meters of vehicle center from the line
@@ -33,16 +36,12 @@ class Line():
         pass
 
 
-    def decision(self,current_fit):
-        if deviation(self.best_fit, self.current_fit) < EPSILON:
+    def refresh_avg_fit(self):
+        if np.sum(self.diffs) < EPSILON:
             self.fit_buffer.appendleft(self.current_fit)
-            self.best_fit = set_best_fit()
+            self.avg_fit = sum(self.fit_buffer)#/BUFFER_LENGTH
         else:
             self.detected = False
-
-
-    def set_best_fit(self):
-        self.best_fit = sum(self.fit_buffer)/BUFFER_LENGTH
 
 
     def get_lane_curvature():
@@ -160,14 +159,9 @@ def laneFit(img, leftLine, rightLine):
                    rightx_current = np.int(np.mean(nonzerox[good_right_inds]))
 
 
-
-
     # Concatenate the arrays of indices
     left_lane_inds = np.concatenate(left_lane_inds)
     right_lane_inds = np.concatenate(right_lane_inds)
-
-
-
 
     # Extract left and right line pixel positions
     leftx = nonzerox[left_lane_inds]    # Geht das nicht auch eleganter mit 'transpose'?
@@ -175,27 +169,20 @@ def laneFit(img, leftLine, rightLine):
     rightx = nonzerox[right_lane_inds]
     righty = nonzeroy[right_lane_inds]
 
-
-
-
     """
     leftPixels = np.transpose(nonzero)[left_lane_inds]
     rightPixels = np.transpose(nonzero)[left_lane_inds]
     """
 
     # Fit a second order polynomial to each (polynomial regression)
-    
-    left_fit = np.polyfit(lefty, leftx, 2)
-    right_fit = np.polyfit(righty, rightx, 2)
-    
-    #print(leftLine.current_fit-left_fit)
+    leftLine.current_fit = np.polyfit(lefty, leftx, 2)
+    leftLine.diffs = np.subtract(leftLine.avg_fit,leftLine.current_fit)
+    leftLine.refresh_avg_fit()
 
-    
-    leftLine.diffs = np.subtract(left_fit,leftLine.current_fit)
-    leftLine.current_fit = left_fit
-    print(leftLine.diffs)
+    rightLine.current_fit = np.polyfit(righty, rightx, 2)
+    rightLine.diffs = np.subtract(rightLine.avg_fit,rightLine.current_fit)
+    rightLine.refresh_avg_fit()
 
-    rightLine.current_fit = right_fit
     
 
     """
@@ -205,12 +192,10 @@ def laneFit(img, leftLine, rightLine):
 
     # Generate x and y values for plotting
     ploty = np.linspace(0, img.shape[0]-1, img.shape[0] )
-    left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
-    right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+    left_fitx = leftLine.avg_fit[0]*ploty**2 + leftLine.avg_fit[1]*ploty + leftLine.avg_fit[2]
+    right_fitx = rightLine.avg_fit[0]*ploty**2 + rightLine.avg_fit[1]*ploty + rightLine.avg_fit[2]
 
-    #print(left_fitx)
-    #print(right_fitx)
-
+    
     #out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     #out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
 
