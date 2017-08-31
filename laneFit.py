@@ -6,8 +6,8 @@ import numpy as np
 
 from collections import deque
 
-BUFFER_LENGTH = 12
-EPSILON = 10.
+BUFFER_LENGTH = 8
+EPSILON = 200.
 NWINDOWS = 9        # Number of sliding windows
 
 
@@ -18,9 +18,9 @@ class Line():
         self.detected = False       # was the line detected in the last iteration?
         self.recent_xfitted = []    # x values of the last n fits of the line
         self.bestx = None           # average x values of the fitted line over the last n iterations
-        self.fit_buffer = deque(BUFFER_LENGTH*[], BUFFER_LENGTH)
+        self.fit_buffer = deque(maxlen=BUFFER_LENGTH)
         self.avg_fit = np.array([0,0,0], dtype='float') # polynomial coefficients averaged over the last n iterations
-        self.current_fit = [np.array([False])]          # polynomial coefficients for the most recent fit
+        self.current_fit = np.array([0,0,0])          # polynomial coefficients for the most recent fit
         self.radius_of_curvature = None                 # radius of curvature of the line in some units
         self.line_base_pos = None                       # distance in meters of vehicle center from the line
         self.diffs = np.array([0,0,0], dtype='float')   # difference in fit coefficients between last and new fits
@@ -37,10 +37,12 @@ class Line():
 
 
     def refresh_avg_fit(self):
-        if np.sum(self.diffs) < EPSILON:
-            self.fit_buffer.appendleft(self.current_fit)
-            self.avg_fit = sum(self.fit_buffer)#/BUFFER_LENGTH
+        if (np.absolute(self.diffs[2]) < EPSILON) | (len(self.fit_buffer) < BUFFER_LENGTH):
+            self.fit_buffer.append(self.current_fit)
+            #self.avg_fit = sum(self.fit_buffer)/BUFFER_LENGTH
+            self.avg_fit = sum(self.fit_buffer)/BUFFER_LENGTH
         else:
+            print('Da!')
             self.detected = False
 
 
@@ -74,7 +76,7 @@ def get_colored_warp(img, ploty, left_fitx, right_fitx):
     pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
     pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
     pts = np.hstack((pts_left, pts_right))
-    a3 = np.array( [[[10,500],[1000,500],[1000,600],[10,600]]], dtype=np.int32 )
+    #a3 = np.array( [[[10,500],[1000,500],[1000,600],[10,600]]], dtype=np.int32 )
     
     # Draw the lane onto the warped blank image
     #return cv2.fillPoly(warp_zero, a3, 255)#np.int_([pts]), (0,255, 0))
@@ -176,11 +178,11 @@ def laneFit(img, leftLine, rightLine):
 
     # Fit a second order polynomial to each (polynomial regression)
     leftLine.current_fit = np.polyfit(lefty, leftx, 2)
-    leftLine.diffs = np.subtract(leftLine.avg_fit,leftLine.current_fit)
+    leftLine.diffs = np.subtract(leftLine.avg_fit, leftLine.current_fit)
     leftLine.refresh_avg_fit()
 
     rightLine.current_fit = np.polyfit(righty, rightx, 2)
-    rightLine.diffs = np.subtract(rightLine.avg_fit,rightLine.current_fit)
+    rightLine.diffs = np.subtract(rightLine.avg_fit, rightLine.current_fit)
     rightLine.refresh_avg_fit()
 
     

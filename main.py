@@ -8,7 +8,6 @@ import numpy as np
 import cv2
 
 from moviepy.editor import VideoFileClip
-from collections import deque
 from saver import image_saver, video_saver
 
 
@@ -19,17 +18,19 @@ from laneFit import *
 
 
 
+leftLane = Line()
+rightLane = Line()
+
 def pipeline(img):
     ksize = 3
 
-    gray = cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
+    img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     
-    pipeline.leftLane = Line()
-    pipeline.rightLane = Line()
 
     #binaryGradx = absSobelThresh(img, orient='x', sobel_kernel=ksize, thresh=(0,20))
     #binaryGrady = absSobelThresh(img, orient='y', sobel_kernel=ksize, thresh=(0,20))
-    binaryMag = magThresh(img, sobel_kernel=ksize, thresh=(65,210) )
+    binaryMag = magThresh(img_bgr, sobel_kernel=ksize, thresh=(65,210) )
     #binaryDir = dirThresh(img, sobel_kernel=ksize, thresh=(-np.pi/4.,np.pi/4.) )
     
     binaryGrad = np.zeros_like(gray)
@@ -39,11 +40,14 @@ def pipeline(img):
     binaryGrad[binaryMag==1] = 1
 
     ##  Color Channels
-    h_binary = HLS_Channel(img, (20,51), 'h')
+    h_binary = HLS_Channel(img_bgr, thresh=(20,30), channel='h')
     #l_binary = HLS_Channel(img, 'l', (5,100))
     #s_binary = HLS_Channel(img, 's', (0,100))
     binaryColor = np.zeros_like(gray)
     binaryColor[h_binary==1] = 1
+    
+    #plt.imshow(binaryColor, cmap='gray')
+    #plt.show()
     
     binaryComposite = np.zeros_like(gray)
     binaryComposite[(binaryGrad==1)|(binaryColor==1)] = 1
@@ -54,7 +58,7 @@ def pipeline(img):
     #   binaryComposite = np.copy(sChannel)
     ##  Import operations which warp the picture into bird's eye perspective here
     binaryWarped = imageWarper(binaryComposite)
-    fittedWarped = laneFit(binaryWarped, pipeline.leftLane, pipeline.rightLane)
+    fittedWarped = laneFit(binaryWarped, leftLane, rightLane)
     
     #plt.imshow(fittedWarped, cmap='gray')
     #plt.show()    
@@ -89,12 +93,13 @@ def screenWriter(img, left_cur, right_cur):
 
 def imageProcessing():
 
-    imageRGB = mpimg.imread('./test_images/test2.jpg')
+    imageRGB = mpimg.imread('./test_images/test1.jpg')
+    #imageRGB = cv2.imread('./test_images/test1.jpg')
     outputImage = pipeline(imageRGB)
 
     height, width = (2, 1)
 
-    fig = plt.figure()
+    #fig = plt.figure()
     #plt.subplot(height, width, 1)
     #plt.imshow(imageRGB)
     #plt.title('Input of the Pipeline')
@@ -111,7 +116,7 @@ def imageProcessing():
 
 
 def videoProcessing():
-    clip = VideoFileClip('./test_videos/project_video.mp4').subclip(19,23)
+    clip = VideoFileClip('./test_videos/project_video.mp4')#.subclip(19,27)
     output_stream = clip.fl_image(pipeline)
     video_saver(output_stream)
 
