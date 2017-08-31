@@ -1,6 +1,6 @@
-#Advanced Lane Finding Project
+# Advanced Lane Finding Project
 
-####The goals / steps of this project are the following:
+#### The goals / steps of this project are the following:
 
 * Compute the camera calibration matrix and distortion coefficients given a set of chessboard images.
 * Apply a distortion correction to raw images.
@@ -13,45 +13,58 @@
 
 
 ---
-##Camera Calibration
+## Camera Calibration
 
-####1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
+#### 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
 
 
 I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image.  Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
 
-I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result: 
+I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result:
 
-<img src="./calibration.png" width="600">
+<img src="./images/calibration.png" width="600">
 
-##Pipeline (single images)
+## Pipeline (single images)
 
-####1. Provide an example of a distortion-corrected image.
+#### 1. Provide an example of a distortion-corrected image.
 To demonstrate the distortion correction, I will apply the function
+
 ```
 cv2.undistort(img, mtx, dist, None, mtx)
 ```
+
 to the test image `straight_lines2.jpg`:
 
-<img src="./undistorted_straight2.png" width="600">
+<img src="./images/undistorted_straight2.png" width="600">
 
 And using the image `test2.jpg`:
 
-<img src="./undistorted_test2.png" width="600">
+<img src="./images/undistorted_test2.png" width="600">
 
-As a step of preprocessing, I have applied this perspective-correctiong function to all the test images available. 
+As a step of preprocessing, I have applied this perspective-correctiong function to all the test images available.
 
 
 
-####2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
+#### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
 Using color and gradient thresholds (lines ?? to ??), I was able to generate a sufficiently clear image:
 
-<img src="./gradients_binary.png" width="600">
+<img src="./images/gradients_binary.png" width="600">
+
+Identifying the left lane line (seconds ?? and ?? in the project video) was one of the trickiest parts.  In order to simplify the tedious work of finding the right threshold for the gradients and color channels - a takss I am not very proficient in - I have programmed a simple program with a GUI and utilizes PyQt4.  It will be provided in my github repository soon.
+
+<img src="./images/sliderAnalyzer.png" width="600">
+
+I chose HLS as color space, and ended up using the H-channel with thresholds (20,30).  The images are surprisingly sensitive with respect to the thresholds in this lower region.
+Finally, I ended up with
+```
+  binaryComposite[(H_channel==1) | (gradMag==1)] = 1,
+```
+although the h-channel was of uttermost importance in this scenario.
 
 
 
-####3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
+#### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
 
 ```
@@ -60,38 +73,38 @@ dst = np.float32([[1020,0], [1020,665], [280,665], [280,0]])
 ```
 
 
-| Source        | Destination       | 
-|:--------------:|:--------------------:| 
-| 675,445     | 1020,0       	 | 
+| Source        | Destination       |
+|:--------------:|:--------------------:|
+| 675,445     | 1020,0       	 |
 | 1020,665   | 1020,665      	 |
 | 280,665     | 280,665      	 |
 | 605,445     | 280,0			 |
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
-<img src="./warped.png" width="600">
+<img src="./images/warped.png" width="600">
 
-####4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
+#### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
 fit my lane lines with a 2nd order polynomial kinda like this:
 
-<img src="./curvature_test2.png" width="600">
+<img src="./images/curvature_test2.png" width="600">
 
 
 
 
-####5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
+#### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
 I did this in lines # through # in my code in `my_other_file.py`
 
-####6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
+#### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
 This is implemented lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
 Just by calling the member `pipeline.lane`, I can display the image in the output.
 
 `test3.jpg`:
 
-<img src="./laneArea_test3.png" width="600">
+<img src="./images/laneArea_test3.png" width="600">
 
 The function `screenWriter()` enables one to display text onto the image.
 
@@ -99,35 +112,26 @@ The function `screenWriter()` enables one to display text onto the image.
 
 ---
 
-##Pipeline (video)
+## Pipeline (video)
 
-####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
+#### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
-Here's a [link to my video result](./project_.mp4)
+Here's a [link to my video result](./output_video/project_.mp4)
 
 ---
 
-##Discussion
+## Discussion
 
-####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
 
-One of my achievements apart from lane detection itself, is establishing a pipeline structure which enables me to experiment more easily with the parameter values.  This is done by using the 'functions are objects'-paradigm of Python, and an own subroutine for working with 
+One of my achievements apart from lane detection itself, is establishing a pipeline structure which enables me to experiment more easily with the parameter values.  This is done by using the 'functions are objects'-paradigm of Python, and an own subroutine for working with
 
+I have followed the advise given at the end of the lectures and implemented stabilization techniques by utilizing
+```
+  from collections import deque
+```
+I let the length of the deque determined by the variable/constant `BUFFER_LENGTH` and store the three float-type parameters of the polynomial fit.  When the deque is filled up, I average them and am able to compare the mean with furrent parameters.  At first I measured the distance, later I used the standard deviation as a measure to determine deviations.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+In the same manner I have calculated the mean of the position of the vehicle wrt the left lane line, and the curvature of the road.  As a rule of thumb, deque lengths between 8 and 12 provided good values.
