@@ -6,6 +6,9 @@ import numpy as np
 
 from collections import deque
 
+
+
+
 BUFFER_LENGTH = 8
 EPSILON = 200.
 NWINDOWS = 9        # Number of sliding windows
@@ -15,20 +18,19 @@ NWINDOWS = 9        # Number of sliding windows
 # Define a class to receive the characteristics of each line detection
 class Line():
     def __init__(self):
-        self.detected = False       # was the line detected in the last iteration?
-        self.recent_xfitted = []    # x values of the last n fits of the line
-        self.bestx = None           # average x values of the fitted line over the last n iterations
-        self.fit_buffer = deque(maxlen=BUFFER_LENGTH)
-        self.avg_fit = np.array([0,0,0], dtype='float') # polynomial coefficients averaged over the last n iterations
-        self.current_fit = np.array([0,0,0])          # polynomial coefficients for the most recent fit
-        self.radius_of_curvature = None                 # radius of curvature of the line in some units
-        self.line_base_pos = None                       # distance in meters of vehicle center from the line
-        self.diffs = np.array([0,0,0], dtype='float')   # difference in fit coefficients between last and new fits
-        self.allx = None                                # x values for detected line pixels
-        self.ally = None                                # y values for detected line pixels
+        self.detected = False                               # was the line detected in the last iteration?
+        self.xbase = None
+        self.allx = None
+        self.ally = None
 
-        self.average_fit = [np.array([False])]
-        #self.average_radius = 
+        self.fit_buffer = deque(maxlen=BUFFER_LENGTH)
+        self.diffs = np.array([0,0,0], dtype='float')       # difference in fit coefficients between last and new fits
+        self.avg_fit = np.array([0,0,0], dtype='float')     # polynomial coefficients averaged over the last n iterations
+        self.current_fit = np.array([0,0,0])                # polynomial coefficients for the most recent fit
+        
+        self.curvature_buffer = deque(maxlen=BUFFER_LENGTH)
+        self.curvature = None                               # radius of curvature of the line in some units
+
 
 
     # deviation from
@@ -39,34 +41,36 @@ class Line():
     def refresh_avg_fit(self):
         if (np.absolute(self.diffs[2]) < EPSILON) | (len(self.fit_buffer) < BUFFER_LENGTH):
             self.fit_buffer.append(self.current_fit)
-            #self.avg_fit = sum(self.fit_buffer)/BUFFER_LENGTH
             self.avg_fit = sum(self.fit_buffer)/BUFFER_LENGTH
         else:
-            print('Da!')
             self.detected = False
 
 
-    def get_lane_curvature():
-        pass
-
-
-    def get_radii(self, ploty):
-        # Calculate the curvature of the lanes:
-        y_eval = np.max(ploty)
-        ym_per_pix = 30/720 # meters per pixel in y dimension
-        xm_per_pix = 3.7/700 # meters per pixel in x dimension
+    def setCurvature(self, ploty):
+        ploty_max = np.max(ploty)
+        ym_per_pix = 30./720    # meters per pixel in y dimension
+        xm_per_pix = 3.7/700    # meters per pixel in x dimension
 
         # Fit new polynomials to x,y in world space
-        left_fit_cr = np.polyfit(lefty*ym_per_pix, leftx*xm_per_pix, 2)
-        right_fit_cr = np.polyfit(righty*ym_per_pix, rightx*xm_per_pix, 2)
+        fit_cr = np.polyfit(self.ally*ym_per_pix, self.allx*xm_per_pix, 2)
         
         # Calculate the new radii of curvature
-        left_curverad = ((1 + (2*left_fit_cr[0]*y_eval*ym_per_pix + left_fit_cr[1])**2)**1.5) / np.absolute(2*left_fit_cr[0])
-        right_curverad = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
-        return left_curverad, right_curverad
+        curveRad = ((1 + (2*fit_cr[0]*ploty_max*ym_per_pix + fit_cr[1])**2)**1.5) / np.absolute(2*fit_cr[0])
+        self.curvature_buffer.append(curveRad)
 
 
-    # Maybe try to eliminate img in this method
+    def getCurvature(self):
+        self.curvature = sum(self.curvature_buffer)/BUFFER_LENGTH
+        return self.curvature
+
+
+
+
+
+
+
+
+
 def get_colored_warp(img, ploty, left_fitx, right_fitx):
     # Create an image to draw the lines on
     warp_zero = np.zeros_like(img).astype(np.uint8)
@@ -84,14 +88,10 @@ def get_colored_warp(img, ploty, left_fitx, right_fitx):
 
 
 
-
 margin = 100    # Width of the windows +/- margin
 minpix = 50     # Minimum number of pixels found to recenter window
 
-
-
 def laneFit(img, leftLine, rightLine):
-
     window_height = np.int(img.shape[0]/NWINDOWS)
     # Identify the x and y positions of all nonzero pixels in the image
     nonzero = img.nonzero()
@@ -112,16 +112,12 @@ def laneFit(img, leftLine, rightLine):
         #out_img = np.dstack((img, img, img))*255
 
         midpoint = np.int(histogram.shape[0]/2)
-        leftx_base = np.argmax(histogram[:midpoint])
-        rightx_base = np.argmax(histogram[midpoint:]) + midpoint
+        leftLine.xbase = np.argmax(histogram[:midpoint])
+        rightLine.xbase = np.argmax(histogram[midpoint:]) + midpoint
 
         # Current positions to be updated for each window
-        leftx_current = leftx_base
-        rightx_current = rightx_base
-
-        #print(midpoint)
-        #print(leftx_current)
-        #print(rightx_current)
+        leftx_current = leftLine.xbase
+        rightx_current = rightLine.xbase
 
 
         if leftLine.detected == False:
@@ -154,11 +150,12 @@ def laneFit(img, leftLine, rightLine):
                 #cv2.rectangle(out_img,(win_xright_low,win_y_low),(win_xright_high,win_y_high),(0,255,0), 2) 
                 good_right_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xright_low) & (nonzerox < win_xright_high)).nonzero()[0]
                 right_lane_inds.append(good_right_inds)
-                
-                
 
                 if len(good_right_inds) > minpix:        
                    rightx_current = np.int(np.mean(nonzerox[good_right_inds]))
+
+
+
 
 
     # Concatenate the arrays of indices
@@ -166,10 +163,10 @@ def laneFit(img, leftLine, rightLine):
     right_lane_inds = np.concatenate(right_lane_inds)
 
     # Extract left and right line pixel positions
-    leftx = nonzerox[left_lane_inds]    # Geht das nicht auch eleganter mit 'transpose'?
-    lefty = nonzeroy[left_lane_inds] 
-    rightx = nonzerox[right_lane_inds]
-    righty = nonzeroy[right_lane_inds]
+    leftLine.allx = nonzerox[left_lane_inds]    # Geht das nicht auch eleganter mit 'transpose'?
+    leftLine.ally = nonzeroy[left_lane_inds] 
+    rightLine.allx = nonzerox[right_lane_inds]
+    rightLine.ally = nonzeroy[right_lane_inds]
 
     """
     leftPixels = np.transpose(nonzero)[left_lane_inds]
@@ -177,15 +174,13 @@ def laneFit(img, leftLine, rightLine):
     """
 
     # Fit a second order polynomial to each (polynomial regression)
-    leftLine.current_fit = np.polyfit(lefty, leftx, 2)
+    leftLine.current_fit = np.polyfit(leftLine.ally, leftLine.allx, 2)
     leftLine.diffs = np.subtract(leftLine.avg_fit, leftLine.current_fit)
     leftLine.refresh_avg_fit()
 
-    rightLine.current_fit = np.polyfit(righty, rightx, 2)
+    rightLine.current_fit = np.polyfit(rightLine.ally, rightLine.allx, 2)
     rightLine.diffs = np.subtract(rightLine.avg_fit, rightLine.current_fit)
     rightLine.refresh_avg_fit()
-
-    
 
     """
     left_fit = np.polyfit(np.transpose(leftPixels)[0],np.transpose(leftPixels)[1], 2)
@@ -194,10 +189,11 @@ def laneFit(img, leftLine, rightLine):
 
     # Generate x and y values for plotting
     ploty = np.linspace(0, img.shape[0]-1, img.shape[0] )
-    left_fitx = leftLine.avg_fit[0]*ploty**2 + leftLine.avg_fit[1]*ploty + leftLine.avg_fit[2]
-    right_fitx = rightLine.avg_fit[0]*ploty**2 + rightLine.avg_fit[1]*ploty + rightLine.avg_fit[2]
+    leftLine.plotx = leftLine.avg_fit[0]*ploty**2 + leftLine.avg_fit[1]*ploty + leftLine.avg_fit[2]
+    rightLine.plotx = rightLine.avg_fit[0]*ploty**2 + rightLine.avg_fit[1]*ploty + rightLine.avg_fit[2]
 
-    
+    leftLine.setCurvature(ploty)
+    rightLine.setCurvature(ploty)
     #out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     #out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
 
@@ -207,16 +203,9 @@ def laneFit(img, leftLine, rightLine):
     plt.plot(right_fitx, ploty, color='yellow')
     plt.xlim(0, 1280)
     plt.ylim(720, 0)
-    return out_img
     """
-    #print(left_fitx)
-    #print(right_fitx)
 
-    color_warp = get_colored_warp(img, ploty, left_fitx, right_fitx)
-    #plt.imshow(color_warp)
-    #plt.show()
-    #left_curverad, right_curverad = get_radii(ploty)
-
+    color_warp = get_colored_warp(img, ploty, leftLine.plotx, rightLine.plotx)
     return color_warp
     
 
