@@ -18,7 +18,7 @@ ret, corners = cv2.findChessboardCorners(gray, (nx, ny), None)
 if ret==True:
 	print('Chessboard pattern recognized!')
 	cv2.drawChessboardCorners(img, (nx, ny), corners, ret)
-	#plt.imshow(img)
+	#plt.imsave('asd.png', img)
 
 
 objpoints = []

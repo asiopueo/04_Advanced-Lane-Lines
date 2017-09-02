@@ -68,9 +68,9 @@ The calculations of gradients and color transformations are performed in the mod
 
 Using the sliders ("range sliders" with two handles are by default not contained in Qt), one can play around with the thresholds for gradients and color channels.  The text boxes below the image window allow the user to edit logical combinations of the channels.
 
-Identifying the yellow left lane line between seconds 22 and 27 in the project video was one of the trickiest parts.  I chose HLS as color space, and ended up using only the H-channel of all three color channels.  As thresholds, I chose (20,30).  I experienced that the images were surprisingly sensitive with respect to the lower threshold.  I.e. changing the lower threshold from 20 to 25 already made the left lane line disappear.
+Identifying the yellow left lane line between seconds 22 and 27 in the project video was one of the trickiest parts.  I chose HLS as color space, and ended up using only the H-channel of all three color channels.  As thresholds, I chose (20,30).  I experienced that the images were surprisingly sensitive with respect to the lower threshold.  I.e. changing the lower threshold from 20 to 25 already made the left lane line disappear.  For the gradients, I only used 'gradMag' with thresholds (65,210).
 
-Using color and gradient thresholds (lines 38 to 55), I was able to generate a sufficiently clear image:
+Hence, using color and gradient thresholds (lines 38 to 55 in `main.py`), I was able to generate a sufficiently clear image:
 
 <img src="./images/gradients_binary.png" width="600">
 
@@ -94,26 +94,34 @@ Or in tabular form:
 
 | Source        | Destination       |
 |:--------------:|:--------------------:|
-| (675,445)     | (1020,0)       	 |
+| (678,445)     | (1020,0)       	 |
 | (1020,665)   | (1020,665)      	 |
 | (280,665)     | (280,665)      	 |
-| (605,445)     | (280,0)			 |
+| (602,445)     | (280,0)			 |
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
 <img src="./images/warped.png" width="600">
 
+
+
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-fit my lane lines with a 2nd order polynomial kinda like this:
+In order to identify the lanes, I performed a perspective transformation like above, but not on a color image, but on a binary image which has already been processed by various gradient and color transforms (cf. **section 2** above).  The warped images then looks as follows:
 
-<img src="./images/curvature_test2.png" width="600">
+The identification of lane pixels is done by the function `laneFit()` in the module of the same name.
+The pixels are identified by an initial histogram an subsequent sliding window search.  The warped image is divided vertically into a number of strips in which the sliding windows are used to identify the pixels.  After this, all positively identified pixels of each lane (left and right) are glued together again and fitted by a polynomial of order 2.
 
 A second order polynomial is given by
 
 $p(y) = a_2 x^2 + a_1 x + a_0$.
 
-The coefficients are stored for a few frames in a deque and I then take a simple average (see discussion below):
+The nonlinear regression is done by a numpy function in lines 177 and 181, respectively:
+```
+  leftLine.current_fit = np.polyfit(leftLine.ally, leftLine.allx, 2)
+```
+
+The coefficients of the polynomial are stored for a few frames (~8 to 12 frames) in a deque and a simple average is calculated (line 41 to 46 in `laneFit.py`; `refresh_avg_fit()`):
 
 $\overline{p}(y) = \overline{a}_2 x^2 + \overline{a}_1 x + \overline{a}_0$,
 
@@ -121,6 +129,9 @@ where
 
 $\overline{a}_i = \frac{1}{N}\sum_{j=1}^N a_{i,j}, \quad i=0,1,2$.
 
+Here is an example of a still test image:
+
+<img src="./images/curvature_test2.png" width="600">
 
 
 
@@ -128,14 +139,28 @@ $\overline{a}_i = \frac{1}{N}\sum_{j=1}^N a_{i,j}, \quad i=0,1,2$.
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines # through # in my code in `my_other_file.py`
+The radii of curvature of the lane lines are calculated in lines 49 to 65 in the module `laneFit.py`.
+I have implemented them as methods `setCurvature()` and `getCurvature()` of the class `Line`.
+The method `setCurvature()` calculated the curvature of a lane line and stores the result in a deque.  The method `getCurvature()` is used to retrieve the average value of the deque.
+
+The distance to the center is currently calculated directly in the image pipeline.  This is not a very elegant solution but possible since it is only a one-line command.  It is contained in line 65 of the main module.  The position is calculated as follows:
+
+```
+  carPos = (float(rightLane.xbase+leftLane.xbase)-img_bgr.shape[1])/2 * 3.7/700
+```
+
+Here, img_bgr is the input image of the pipeline in 'bgr-format'.
+
+
+Finally, both curvature and position in the lane are printed onto the screen by the function `screenWriter()` in lines 79 to 82 of the main module `main.py`.  This function utilizes the openCV-command `putText()`.
+
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
 
 <img src="./images/laneArea_test3.png" width="600">
 
-The function `screenWriter()` enables one to display text onto the image.
+
 
 
 
@@ -146,6 +171,7 @@ The function `screenWriter()` enables one to display text onto the image.
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
 Here's a [link to my video result](./output_video/llines.mp4).
+Please notice that the detected lane in the video has been drawn **white** instead of green as a last-minute decision.  This was due some experimentation with the function `get_colored_warp()` in the module `laneFit.py`.
 
 ---
 
@@ -155,7 +181,9 @@ Here's a [link to my video result](./output_video/llines.mp4).
 
 Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
 
-One of my achievements apart from lane detection itself, is establishing a pipeline structure which enables me to experiment more easily with the parameter values.  This is done by using the 'functions are objects'-paradigm of Python, and an own subroutine for working with
+One of my achievements apart from lane detection itself, is establishing a pipeline structure which enables me to experiment more easily with the parameter values.  This is done by using the 'functions are objects'-paradigm of Python.
+
+Identifying useful thresholds for the gradients and color channels was especially tricky.  I am not very good in tinkering around in a python strip and instead made an attempt to create a small program with PyQt to solve this problem (I later learned that it is also possible to create something similar within a Jupyter notebook).  This has simplified my task profoundly, and I plan to apply the methods onto the more challenging project videos as soon as I have more time.
 
 I have followed the advise given at the end of the lectures and implemented stabilization techniques by utilizing the module `deque`:
 ```
@@ -166,6 +194,5 @@ I let the length of the deque be determined by the variable `BUFFER_LENGTH` and 
 $\mid\overline{a}_0-a_0\mid$.
 
 Of course, when aiming for more stable code, I'd aim for an approach which also involves the leading coefficients of the polynomial fit and a more mathematical approach.
-
 
 In the same manner I have calculated the mean of the position of the vehicle with respect to the left lane line, and the curvature of the road.  As a rule of thumb, deque lengths between 8 and 12 provided good values.

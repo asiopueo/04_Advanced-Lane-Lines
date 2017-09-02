@@ -62,7 +62,7 @@ def pipeline(img):
     weightedImg = weighted_img(fittedWindshield, img)
 
     # Improve this measurement
-    carPos = float(rightLane.xbase-leftLane.xbase)*3.7/1400 #/2 * 3.7/700
+    carPos = (float(rightLane.xbase+leftLane.xbase)-gray.shape[1])/2 * 3.7/700
     
     weightedImg = screenWriter(weightedImg, textString = 'Curvature radius of left lane line: ' + '{:.1f}'.format(leftLane.getCurvature()) + 'm', pos=(100,100))
     weightedImg = screenWriter(weightedImg, textString = 'Curvature radius of right lane line: ' + '{:.1f}'.format(rightLane.getCurvature()) + 'm', pos=(100,130))
@@ -101,7 +101,7 @@ def imageProcessing():
     #image_saver(outputImage)
 
 def videoProcessing():
-    clip = VideoFileClip('./test_videos/project_video.mp4').subclip(19,36)
+    clip = VideoFileClip('./test_videos/project_video.mp4')#.subclip(19,23)
     output_stream = clip.fl_image(pipeline)
     video_saver(output_stream)
 
