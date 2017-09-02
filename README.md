@@ -170,7 +170,7 @@ Finally, both curvature and position in the lane are printed onto the screen by 
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
-Here's a [link to my video result](./output_video/llines.mp4).
+Here's a [link to my video result](./videos/llines.mp4).
 Please notice that the detected lane in the video has been drawn **white** instead of green as a last-minute decision.  This was due some experimentation with the function `get_colored_warp()` in the module `laneFit.py`.
 
 ---
