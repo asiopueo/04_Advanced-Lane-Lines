@@ -34,6 +34,8 @@ objpoints.append(objp)
 
 ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
 
+print('mtx = ', mtx)
+print('dist = ', dist)
 
 
 img = cv2.imread('./test_images/test2.jpg')
@@ -45,7 +47,7 @@ dst = cv2.cvtColor(dst, cv2.COLOR_BGR2RGB)
 fig = plt.figure()
 
 plt.subplot(2,1,1)
-plt.title('Original Image')
+plt.title("Original Image ('test2.jpg')")
 plt.imshow(img)
 
 plt.subplot(2,1,2)
@@ -55,7 +57,7 @@ plt.imshow(dst)
 plt.tight_layout()
 plt.show()
 
-fig.savefig('./output/undistorted_test2.png')
+fig.savefig('./output_images/undistorted_test2.png')
 
 
 

@@ -21,8 +21,18 @@ from laneFit import *
 leftLane = Line()
 rightLane = Line()
 
+mtx =  np.array([ [ 878.36220519,    0.,          641.10477419],
+                  [   0.,          850.22573416,  237.43088632],
+                  [   0.,            0.,            1.        ]])
+
+dist = np.array([ [-0.24236876,  0.29461093,  0.01910478,  0.00032653, -0.21494586] ])
+
+
+
+
 def pipeline(img):
     img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    img_bgr = cv2.undistort(img_bgr, mtx, dist, None, mtx)  # Camera correction
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     
     #binaryGradx = absSobelThresh(img, orient='x', sobel_kernel=ksize, thresh=(0,20))
@@ -62,7 +72,6 @@ def pipeline(img):
 
 
 
-
 def weighted_img(img, initial_img, α=1., β=.2, λ=0.):
     img = np.dstack((img,img,img))
     return cv2.addWeighted(initial_img, α, img, β, λ)
@@ -74,19 +83,16 @@ def screenWriter(img, textString, pos):
 
 
 
-
-
 def imageProcessing():
     imageRGB = mpimg.imread('./test_images/test1.jpg')
-    #imageRGB = cv2.imread('./test_images/test1.jpg')
     outputImage = pipeline(imageRGB)
 
     height, width = (2, 1)
-    #fig = plt.figure()
-    #plt.subplot(height, width, 1)
-    #plt.imshow(imageRGB)
-    #plt.title('Input of the Pipeline')
-    #plt.subplot(height, width, height*width)
+    fig = plt.figure()
+    plt.subplot(height, width, 1)
+    plt.imshow(imageRGB)
+    plt.title('Input of the Pipeline')
+    plt.subplot(height, width, 2)
     #plt.imshow(outputImage, cmap='gray')
     plt.imshow(outputImage)
     plt.title('Output of the Pipeline')
@@ -98,11 +104,6 @@ def videoProcessing():
     clip = VideoFileClip('./test_videos/project_video.mp4').subclip(19,36)
     output_stream = clip.fl_image(pipeline)
     video_saver(output_stream)
-
-
-
-
-
 
 
 
@@ -130,6 +131,7 @@ def main(argv):
 
 
 if __name__=='__main__':
+
     main(sys.argv[1:])
     sys.exit()
 

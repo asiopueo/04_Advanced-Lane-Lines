@@ -27,7 +27,7 @@ if __name__=='__main__':
 	
 	image_rgb = mpimg.imread('./test_images/straight_lines1.jpg')
 
-	image_grad_bin = mpimg.imread('./gradients_binary.png')
+	image_grad_bin = mpimg.imread('./images/gradients_binary.png')
 		
 	image_warped = imageWarper(image_rgb)
 
