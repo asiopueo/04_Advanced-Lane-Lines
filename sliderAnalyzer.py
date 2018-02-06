@@ -344,3 +344,9 @@ for j in range(image.shape[1]):
     for i in range(image.shape[0]):
         qimage.setPixel(j, i, QColor(image[i][j][0],image[i][j][0],image[i][j][0]).rgb())
 """
+
+
+
+
+
+

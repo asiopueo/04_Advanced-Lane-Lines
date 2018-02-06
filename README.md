@@ -114,7 +114,7 @@ The pixels are identified by an initial histogram an subsequent sliding window s
 
 A second order polynomial is given by
 
-$p(y) = a_2 x^2 + a_1 x + a_0$.
+![](./images/polygon_grade2.png)
 
 The nonlinear regression is done by a numpy function in lines 177 and 181, respectively:
 ```
@@ -123,11 +123,11 @@ The nonlinear regression is done by a numpy function in lines 177 and 181, respe
 
 The coefficients of the polynomial are stored for a few frames (~8 to 12 frames) in a deque and a simple average is calculated (line 41 to 46 in `laneFit.py`; `refresh_avg_fit()`):
 
-$\overline{p}(y) = \overline{a}_2 x^2 + \overline{a}_1 x + \overline{a}_0$,
+![](./images/polygon_grade2_avg.png)
 
 where
 
-$\overline{a}_i = \frac{1}{N}\sum_{j=1}^N a_{i,j}, \quad i=0,1,2$.
+![](./images/coeff_avg.png)
 
 Here is an example of a still test image:
 
@@ -191,7 +191,7 @@ I have followed the advise given at the end of the lectures and implemented stab
 ```
 I let the length of the deque be determined by the variable `BUFFER_LENGTH` and store the three float-type parameters of the polynomial fit.  When the deque is filled up (i.e. after BUFFER_LENGTH frames), I average them and am able to compare the mean with the parameters which were calculated in the most current frame.  A point of discussion when it comes to these sort of problems is choosing the right metric.  I have chosen a very simple approach by comparing the constant coefficients of the polynomial fits, i.e.
 
-$\mid\overline{a}_0-a_0\mid$.
+![](./images/dist.png)
 
 Of course, when aiming for more stable code, I'd aim for an approach which also involves the leading coefficients of the polynomial fit and a more mathematical approach.
 
